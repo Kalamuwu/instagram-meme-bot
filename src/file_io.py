@@ -20,10 +20,10 @@ def change_file_type(path):
     # just in case
     if ext == "gif": return False, {"type": typ, "ext": ext}
     
-    new_path = f"{sorted_media_folder_base}/{fmt}/{filename}.{fmt}"
+    new_path = f"media/sorted/{fmt}/{filename}.{fmt}"
     i = 1
     while os.path.exists(new_path):
-        new_path = f"{sorted_media_folder_base}/{fmt}/{filename}-{i}.{fmt}"
+        new_path = f"media/sorted/{fmt}/{filename}-{i}.{fmt}"
         i += 1
     if typ == "image":
         os.system(f"mogrify -format {fmt} '{path}'")
