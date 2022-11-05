@@ -48,7 +48,7 @@ class Bot:
     def login(self):
         """ Logs in this instance's Client. """
         if self.shell.prompt("Log in?"):
-            self.shell.log("Logging in to account ", shell.highlight(IG_USERNAME), "...", sep="")
+            self.shell.log("Logging in to account ", self.shell.highlight(IG_USERNAME), "...", sep="")
             self.client.login(IG_USERNAME, IG_PASSWORD)
             self.shell.success("Logged in")
             logged_in = True
@@ -60,7 +60,7 @@ class Bot:
             self.queue.add("media/sorted/jpg/"+file)
         for file in os.listdir("media/sorted/mp4"):
             self.queue.add("media/sorted/mp4/"+file)
-        self.shell.log("Discovered", shell.highlight(len(self.queue)), "files already sorted.")
+        self.shell.log("Discovered", self.shell.highlight(len(self.queue)), "files already sorted.")
     
 
     def __scan_and_sort_new(self):
@@ -102,9 +102,6 @@ class Bot:
             shell.success(f"-- Main loop start --")
             while True:
                 self.__scan_and_sort_new()
-                
-                ## keep for something?
-                # success("Posted", data["media_type"], highlight(data["filename"]), "at", data["taken_at"].strftime("%I:%M on %b %-d"))
                 
                 time.sleep(SORT_SLEEP_SECONDS)
 
