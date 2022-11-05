@@ -35,16 +35,16 @@ class Shell:
         # threading
         self.__queue = deque()
         self.write_loop().start()
-        self.queue_lock = threading.Lock()
-        self.file_lock = threading.Lock()
-        self.input_lock = threading.Lock()
+        self.__queue_lock = threading.Lock()
+        self.__file_lock = threading.Lock()
+        self.__input_lock = threading.Lock()
 
     
     def __handle_to_file(self, data:dict={}) -> None:
         if "text" not in data: raise KeyError("Key 'text' not found")
         if "is_error" not in data: raise KeyError("Key 'is_error' not found")
         if "only" not in data: raise KeyError("Key 'only' not found")
-        with self.file_lock:
+        with self.__file_lock:
             # print to console
             if data["only"] != "file":
                 print(data["text"], end='', flush=True, file=sys.stderr if data["is_error"] else sys.stdout)
@@ -63,13 +63,13 @@ class Shell:
         out = header + sep.join(str(arg) for arg in args) + end
         out.replace('\n', '\n'+header)
         only = "console" if console_only else "file" if file_only else None
-        with self.queue_lock:
+        with self.__queue_lock:
             self.__queue.append({ "text": out, "is_error": is_error, "only": only })
      
     def __write_loop(self):
         while True:
             if len(self.__queue):
-                with self.queue_lock: val = self.__queue.popleft()
+                with self.__queue_lock: val = self.__queue.popleft()
                 self.__handle_to_file(val)
     
     def write_loop(self):
@@ -100,7 +100,7 @@ class Shell:
         If `default` is `None`, will ask again until an answer is given. Otherwise, when no answer is given, returns `default`.
         """
         string += "\033[35mPROMPT "+string+"\033[0m "
-        with self.input_lock:
+        with self.__input_lock:
             self.__add_to_queue("\033[35mPROMPT ", string, end='', console_only=True)
             val = input().strip()
             while default is None and len(val) == 0:
@@ -118,7 +118,7 @@ class Shell:
         if default is None:
             val = ""
             string += " (y|n)  "
-            with self.input_lock:
+            with self.__input_lock:
                 while len(val)==0 or not (val[0] in "ynYN"):
                     self.__add_to_queue("\033[35mPROMPT ", string, end='', console_only=True)
                     val = input().strip()
@@ -126,7 +126,7 @@ class Shell:
             return val[0].lower() == "y"
         else:
             string += f" ({'Y|n' if default else 'y|N'})  "
-            with self.input_lock:
+            with self.__input_lock:
                 self.__add_to_queue("\033[35mPROMPT ", string, end='', console_only=True)
                 val = input().strip()
             if not (self.__log_file is None): self.__add_to_queue("\033[35mPROMPT ", string, val, file_only=True, sep='')
