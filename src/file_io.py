@@ -28,6 +28,8 @@ def change_file_type(path):
     if typ == "image":
         os.system(f"mogrify -format {fmt} '{path}'")
         os.rename(folder+"/"+filename+"."+fmt, new_path)
+        try: os.remove(path)
+        except: pass
     else:
         os.system(f"ffmpeg -hide_banner -loglevel error -y -i '{path}' '{new_path}'")
         os.remove(path)
