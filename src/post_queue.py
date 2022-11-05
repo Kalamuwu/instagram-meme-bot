@@ -45,9 +45,6 @@ class PostQueue:
     def time_since_last_post(self):
         return int(time()) - self.last_post
     
-    @property
-    def cooldown(self):
-        return max(0, self._cooldown-self.time_since_last_post())
     
     def get_next_filename(self):
         return self.queue[0]
@@ -76,6 +73,10 @@ class PostQueue:
         self.last_post = int(time())
         self.generate_new_cooldown()
         return True, data
+    
+    @property
+    def cooldown(self):
+        return max(0, self._cooldown-self.time_since_last_post())
     
     def __len__(self) -> int:
         return len(self.queue)
