@@ -10,21 +10,6 @@ from config import (PERMANENT_HASHTAGS, sorted_media_folder_base)
 from shell import get_shell
 shell = get_shell()
 
-
-def quick_convert_media_folder(media_folder_path: str):
-    global shell
-    if not media_folder_path.endswith("/"): media_folder_path += "/"
-    debug("Starting file type conversions...")
-    image_types = ["png", "jpeg", "bmp", "webp"]
-    video_types = ["mp4"]
-    for fmt in image_types:
-        os.system("mogrify -format jpg "+media_folder_path+"/*."+fmt)
-    shell.log("Converted all", ','.join(image_types), "to jpg")
-    for fmt in video_types:
-        os.system("mogrify -format jpg "+media_folder_path+"/*."+fmt)
-    shell.log("Converted all", ','.join(video_types), "to mp4")
-
-
 def change_file_type(path):
     typ,ext = magic.from_file(path, mime=True).split("/")
     folder, filename, fileext = PostQueue.parse_path(path)
