@@ -10,7 +10,7 @@ from config import (
     POST_DELAY_MIN_SECONDS, POST_DELAY_MAX_SECONDS
 )
 
-from shell import Shell, get_shell
+from threaded_shell import Shell, get_shell
 
 class PostQueue:
     def __init__(self, client: Client, shell: Shell = None):

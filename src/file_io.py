@@ -5,9 +5,9 @@ import magic
 from instagrapi.types import Location
 
 from src.post_queue import PostQueue
-from config import (PERMANENT_HASHTAGS, sorted_media_folder_base)
+from config import PERMANENT_HASHTAGS
 
-from shell import get_shell
+from threaded_shell import get_shell
 shell = get_shell()
 
 def change_file_type(path):

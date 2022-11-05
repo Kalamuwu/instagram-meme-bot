@@ -22,7 +22,7 @@ from config import (
     DEBUG, SORT_SLEEP_SECONDS
 )
 
-from shell import get_shell
+from threaded_shell import get_shell, Shell
 
 class Bot:
     def __init__(self, shell:Shell=None, client:Client=None):
