@@ -21,12 +21,14 @@ class PostQueue:
         self.generate_new_cooldown()
         self.shell = get_shell() if shell is None else shell
     
+    class AlreadyInQueueException(Exception): pass
+    
     def generate_new_cooldown(self) -> None:
         self._cooldown = randint(POST_DELAY_MIN_SECONDS, POST_DELAY_MAX_SECONDS)
         self.shell.log("New post cooldown", self.shell.highlight(self._cooldown), "seconds")
     
-    def add(self, path) -> (bool, object):
-        if path in self.queue: return False, "already in queue"
+    def add(self, path) -> (bool, Exception):
+        if path in self.queue: return False, self.__class__.AlreadyInQueueException("already in queue")
         self.queue.append(path)
         return True, None
 
