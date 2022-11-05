@@ -1,0 +1,14 @@
+__pycache__
+lib
+bin
+.vscode
+media/*
+!media
+!media/discard
+!media/outbound
+!media/sorted
+!media/sorted/mp4
+!media/sorted/jpg
+pyenv.cfg
+sys
+config.py
