@@ -41,21 +41,30 @@ class Shell:
 
     
     def __handle_to_file(self, data:dict={}) -> None:
+        if "text" not in data: raise KeyError("Key 'text' not found")
+        if "is_error" not in data: raise KeyError("Key 'is_error' not found")
+        if "only" not in data: raise KeyError("Key 'only' not found")
         with self.file_lock:
-            try:
+            # print to console
+            if data["only"] != "file":
+                print(data["text"], end='', flush=True, file=sys.stderr if data["is_error"] else sys.stdout)
+            # print to file
+            if data["only"] != "console":
                 file = self.__error_file if data["is_error"] else self.__log_file
-                print(data["text"], end=' ', flush=True, file=sys.stderr if data["is_error"] else sys.stdout)
-                if not (file is None): print(data["text"], end='', flush=True, file=file)
-            except KeyError:
-                raise KeyError("Invalid data dict given")
+                if not (self.__log_file is None):
+                    print(data["text"], end='', flush=True, file=self.__log_file)
+                if data["is_error"] and not (self.__error_file is None):
+                    print(data["text"], end='', flush=True, file=self.__error_file)
 
-    def __add_to_queue(self, header:str, *args, is_error:bool=False, end='\n', sep=' ') -> None:
+    def __add_to_queue(self, header:str, *args, is_error:bool=False, console_only:bool=False, file_only:bool=False, end='\n', sep=' ') -> None:
+        if console_only and file_only: raise AttributeError("console_only and file_only cannot both be True")
         header += "\033[0m"
         end += "\033[0m"
         out = header + sep.join(str(arg) for arg in args) + end
         out.replace('\n', '\n'+header)
+        only = "console" if console_only else "file" if file_only else None
         with self.queue_lock:
-            self.__queue.append({ "text": out, "is_error": is_error })
+            self.__queue.append({ "text": out, "is_error": is_error, "only": only })
      
     def __write_loop(self):
         while True:
@@ -67,7 +76,7 @@ class Shell:
         try:
             return self.thread
         except AttributeError:
-            self.thread = threading.Thread(target=self.__write_loop, daemon=True)
+            self.thread = threading.Thread(target=self.__write_loop, name="ShellWriteLoop-Daemon", daemon=True)
             return self.thread
     
     
@@ -90,12 +99,14 @@ class Shell:
         Asks the user a question and returns the answer.
         If `default` is `None`, will ask again until an answer is given. Otherwise, when no answer is given, returns `default`.
         """
-        q = "\033[35mPROMPT "+string+"\033[0m "
+        string += "\033[35mPROMPT "+string+"\033[0m "
         with self.input_lock:
-            val = input(q)
+            self.__add_to_queue("\033[35mPROMPT ", string, end='', console_only=True)
+            val = input().strip()
             while default is None and len(val) == 0:
-                val = input(q)
-        if not (self.__log_file is None): self.__add_to_queue("", q, val, sep='')
+                self.__add_to_queue("\033[35mPROMPT ", string, end='', console_only=True)
+                val = input().strip()
+        if not (self.__log_file is None): self.__add_to_queue("\033[35mPROMPT ", string, val, file_only=True, sep='')
         return default if val=="" else val
 
 
@@ -106,23 +117,26 @@ class Shell:
         """
         if default is None:
             val = ""
-            q = f"\033[35mPROMPT {string} (y|n)\033[0m  "
+            string += " (y|n)  "
             with self.input_lock:
                 while len(val)==0 or not (val[0] in "ynYN"):
-                    val = input(q).strip()
-            if not (self.__log_file is None): self.__add_to_queue("", q, val, sep='')
+                    self.__add_to_queue("\033[35mPROMPT ", string, end='', console_only=True)
+                    val = input().strip()
+            if not (self.__log_file is None): self.__add_to_queue("\033[35mPROMPT ", string, val, file_only=True, sep='')
             return val[0].lower() == "y"
         else:
-            q = f"\033[35mPROMPT {string} ({'Y|n' if default else 'y|N'})\033[0m  "
-            with self.input_lock: val = input(q).strip()
-            if not (self.__log_file is None): self.__add_to_queue("", q, val, sep='')
+            string += f" ({'Y|n' if default else 'y|N'})  "
+            with self.input_lock:
+                self.__add_to_queue("\033[35mPROMPT ", string, end='', console_only=True)
+                val = input().strip()
+            if not (self.__log_file is None): self.__add_to_queue("\033[35mPROMPT ", string, val, file_only=True, sep='')
             if len(val)==0 or val[0] not in "ynYN":
                 val = "y" if default else "n"
             if default: return val[0].lower() != "n"
             else:       return val[0].lower() == "y"
 
 
-def get_shell():
+def get_shell() -> Shell:
     """ Gets the current active global shell object. """
     try:
         return Shell.shell
@@ -133,22 +147,26 @@ def get_shell():
 
 # for testing
 if __name__ == "__main__":
+    import time
     def threadfunc():
         shell = get_shell()
-        shell.log("Starting thread")
-        time.sleep(5)
-        shell.log("Finishing thread")
+        shell.log("B1 Thread started")
+        time.sleep(3)
+        shell.prompt("B2 Finishing thread")
     def main():
-        import time
         shell = get_shell()
         shell.debug("A  Debug mode active")
-        shell.log("B  Sleeping for 1s")
+        th = threading.Thread(target=threadfunc)
+        shell.log("B  Starting thread")
+        th.start()
+        shell.warn("C1 Sleeping for 1s")
         time.sleep(1)
-        shell.success("C  finished waiting")
-        shell.error("D  Failed")
+        shell.success("C2 ...finished sleep")
+        shell.error("D  Error testing")
         prompt = shell.prompt("E  Say hello?")
         if prompt:
             shell.success("F1 Hello!")
         else:
             shell.debug("F2 Skipping saying hello")
+        th.join() # just in case
     main()
