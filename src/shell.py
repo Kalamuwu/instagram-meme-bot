@@ -37,6 +37,7 @@ class Shell:
         self.write_loop().start()
         self.queue_lock = threading.Lock()
         self.file_lock = threading.Lock()
+        self.input_lock = threading.Lock()
 
     
     def __handle_to_file(self, data:dict={}) -> None:
@@ -89,14 +90,13 @@ class Shell:
         Asks the user a question and returns the answer.
         If `default` is `None`, will ask again until an answer is given. Otherwise, when no answer is given, returns `default`.
         """
-        def __ask(string, default):
-            q = "\033[35mPROMPT "+string+"\033[0m "
+        q = "\033[35mPROMPT "+string+"\033[0m "
+        with self.input_lock:
             val = input(q)
             while default is None and len(val) == 0:
                 val = input(q)
-            if not (self.__log_file is None): self.__add_to_queue("", q, val, sep='')
-            return default if val=="" else val
-        return threading.Thread(target=ask, args=(string,default))
+        if not (self.__log_file is None): self.__add_to_queue("", q, val, sep='')
+        return default if val=="" else val
 
 
     def prompt(self, string: str, default: bool = None) -> bool:
@@ -107,13 +107,14 @@ class Shell:
         if default is None:
             val = ""
             q = f"\033[35mPROMPT {string} (y|n)\033[0m  "
-            while len(val)==0 or not (val[0] in "ynYN"):
-                val = input(q).strip()
+            with self.input_lock:
+                while len(val)==0 or not (val[0] in "ynYN"):
+                    val = input(q).strip()
             if not (self.__log_file is None): self.__add_to_queue("", q, val, sep='')
             return val[0].lower() == "y"
         else:
             q = f"\033[35mPROMPT {string} ({'Y|n' if default else 'y|N'})\033[0m  "
-            val = input(q).strip()
+            with self.input_lock: val = input(q).strip()
             if not (self.__log_file is None): self.__add_to_queue("", q, val, sep='')
             if len(val)==0 or val[0] not in "ynYN":
                 val = "y" if default else "n"
@@ -132,6 +133,11 @@ def get_shell():
 
 # for testing
 if __name__ == "__main__":
+    def threadfunc():
+        shell = get_shell()
+        shell.log("Starting thread")
+        time.sleep(5)
+        shell.log("Finishing thread")
     def main():
         import time
         shell = get_shell()
