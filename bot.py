@@ -7,6 +7,7 @@
 import os
 import threading
 import time
+from random import randint
 
 from instagrapi import Client, exceptions
 
@@ -19,7 +20,9 @@ from src.post_queue import PostQueue
 
 from config import (
     IG_USERNAME, IG_PASSWORD,
-    DEBUG, SORT_SLEEP_SECONDS
+    DEBUG,
+    SORT_SLEEP_SECONDS,
+    POST_DELAY_MIN_SECONDS, POST_DELAY_MAX_SECONDS, 
 )
 
 from threaded_shell import get_shell, Shell
@@ -37,14 +40,16 @@ class Bot:
         else: self.client = client
         self.logged_in = False
         
-        self.queue = PostQueue(client)
         self.__filesystem_lock = threading.Lock()
-        
         with self.__filesystem_lock:
             if not os.path.exists("media/outbound"): os.makedirs("media/outbound")
             if not os.path.exists("media/sorted/mp4"): os.makedirs("media/sorted/mp4")
             if not os.path.exists("media/sorted/jpg"): os.makedirs("media/sorted/jpg")
             if not os.path.exists("media/discard"): os.makedirs("media/discard")
+        
+        self.queue = PostQueue(self.client)
+        self.__scan_for_existing_sorted()
+        
     
 
     def login(self):
@@ -53,7 +58,7 @@ class Bot:
             self.shell.log("Logging in to account ", self.shell.highlight(IG_USERNAME), "...", sep="")
             self.client.login(IG_USERNAME, IG_PASSWORD)
             self.shell.success("Logged in")
-            logged_in = True
+            self.logged_in = True
 
 
     def __scan_for_existing_sorted(self):
@@ -65,21 +70,31 @@ class Bot:
         self.shell.log("Discovered", self.shell.highlight(len(self.queue)), "files already sorted.")
     
 
+    def __scan_and_sort_new_thread(self):
+        self.shell.success(f"-- Scan+Sort Thread Start --")
+        while True:
+            converted = 0
+            total = 0
+            with self.__filesystem_lock:
+                for path in os.listdir("media/outbound"):
+                    conv = convert_and_sort(self.queue, "media/outbound/"+path)
+                    if conv: converted += 1
+                    total += 1
+            if converted: self.shell.log("Sort: Discovered", self.shell.highlight(total), "files. Added", self.shell.highlight(converted), "files to queue.")
+            if total: self.shell.log("Sort:", self.shell.highlight(len(self.queue)), "files in queue.")
+            time.sleep(SORT_SLEEP_SECONDS)
+
     def __scan_and_sort_new(self):
-        converted = 0
-        with self.__filesystem_lock:
-            for path in os.listdir("media/outbound"):
-                conv = convert_and_sort(self.queue, "media/outbound/"+path)
-                if conv: converted += 1
-            self.shell.debug("Sort: sorted, clearing folder.")
-            os.system(f"rm media/outbound/*.jpg")
-            os.system(f"rm media/outbound/*.mp4")
-        self.shell.log("Sort: Added", self.shell.highlight(converted), "files to queue.", self.shell.highlight(len(self.queue)), "files now currently in queue.")
-    
-    
-    def __post(self):
-        if logged_in:
-            if self.queue.get_cooldown() == 0:
+        try:
+            return self.scan_thread
+        except AttributeError:
+            self.scan_thread = threading.Thread(target=self.__scan_and_sort_new_thread, name="ScanAndSortNew-Daemon", daemon=True)
+            return self.scan_thread
+
+
+    def __post_next_in_queue(self):
+        if self.logged_in:
+            if self.queue.cooldown == 0:
                 if len(self.queue) > 0:
                     opts = get_next_options(self.queue.get_next_filename())
                     res, data = self.queue.post(**opts)
@@ -100,13 +115,29 @@ class Bot:
           b. Post next in queue
           c. Sleep
         """
-        self.__scan_for_existing_sorted()
+        self.__scan_and_sort_new().start()
+        post_thread = None
         try:
-            shell.success(f"-- Main loop start --")
-            while True:
-                self.__scan_and_sort_new()
-                
-                time.sleep(SORT_SLEEP_SECONDS)
+            if self.logged_in:
+                self.shell.success(f"-- Post loop start --")
+                while True:
+                    post_thread = threading.Thread(target=self.__post_next_in_queue, name="PostNextInQueue-Thread")
+                    post_thread.start()
+
+                    sleep_time = randint(POST_DELAY_MIN_SECONDS,POST_DELAY_MAX_SECONDS)
+                    self.shell.log("Waiting", sleep_time, "seconds for next post.")
+                    time.sleep(sleep_time)
+                    
+                    if post_thread.is_alive():
+                        self.shell.log("Waiting for post thread thread to stop...")
+                        post_thread.join()
+            
+            else:
+                self.shell.warn("Not logged in - just sorting.")
+                while True: pass
 
         except KeyboardInterrupt:
-            shell.log("Exiting.")
+            if post_thread is not None:
+                self.shell.log("Stopping post thread...")
+                post_thread.join()
+            self.shell.success("Exiting.")
