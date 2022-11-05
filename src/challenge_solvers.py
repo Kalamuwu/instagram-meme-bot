@@ -14,7 +14,7 @@ from instagrapi.exceptions import (
     SelectContactPointRecoveryForm,
 )
 
-from src.shell import get_shell
+from shell import get_shell
 shell = get_shell()
 
 def get_code_from_sms(username):

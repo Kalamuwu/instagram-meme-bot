@@ -22,7 +22,7 @@ from config import (
     DEBUG, SORT_SLEEP_SECONDS
 )
 
-from src.shell import get_shell
+from shell import get_shell
 
 class Bot:
     def __init__(self, shell:Shell=None, client:Client=None):
@@ -38,11 +38,13 @@ class Bot:
         self.logged_in = False
         
         self.queue = PostQueue(client)
+        self.__filesystem_lock = threading.Lock()
         
-        if not os.path.exists("media/outbound"): os.makedirs("media/outbound")
-        if not os.path.exists("media/sorted/mp4"): os.makedirs("media/sorted/mp4")
-        if not os.path.exists("media/sorted/jpg"): os.makedirs("media/sorted/jpg")
-        if not os.path.exists("media/discard"): os.makedirs("media/discard")
+        with self.__filesystem_lock:
+            if not os.path.exists("media/outbound"): os.makedirs("media/outbound")
+            if not os.path.exists("media/sorted/mp4"): os.makedirs("media/sorted/mp4")
+            if not os.path.exists("media/sorted/jpg"): os.makedirs("media/sorted/jpg")
+            if not os.path.exists("media/discard"): os.makedirs("media/discard")
     
 
     def login(self):
@@ -65,12 +67,13 @@ class Bot:
 
     def __scan_and_sort_new(self):
         converted = 0
-        if len(os.listdir("media/outbound")):
+        with self.__filesystem_lock:
             for path in os.listdir("media/outbound"):
                 conv = convert_and_sort(self.queue, "media/outbound/"+path)
                 if conv: converted += 1
             self.shell.debug("Sort: sorted, clearing folder.")
-            os.system(f"rm media/outbound/*")
+            os.system(f"rm media/outbound/*.jpg")
+            os.system(f"rm media/outbound/*.mp4")
         self.shell.log("Sort: Added", self.shell.highlight(converted), "files to queue.", self.shell.highlight(len(self.queue)), "files now currently in queue.")
     
     

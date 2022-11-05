@@ -7,7 +7,7 @@ from instagrapi.types import Location
 from src.post_queue import PostQueue
 from config import (PERMANENT_HASHTAGS, sorted_media_folder_base)
 
-from src.shell import get_shell
+from shell import get_shell
 shell = get_shell()
 
 
