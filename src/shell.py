@@ -143,30 +143,3 @@ def get_shell() -> Shell:
     except AttributeError:
         Shell.shell = Shell()
         return Shell.shell
-
-
-# for testing
-if __name__ == "__main__":
-    import time
-    def threadfunc():
-        shell = get_shell()
-        shell.log("B1 Thread started")
-        time.sleep(3)
-        shell.prompt("B2 Finishing thread")
-    def main():
-        shell = get_shell()
-        shell.debug("A  Debug mode active")
-        th = threading.Thread(target=threadfunc)
-        shell.log("B  Starting thread")
-        th.start()
-        shell.warn("C1 Sleeping for 1s")
-        time.sleep(1)
-        shell.success("C2 ...finished sleep")
-        shell.error("D  Error testing")
-        prompt = shell.prompt("E  Say hello?")
-        if prompt:
-            shell.success("F1 Hello!")
-        else:
-            shell.debug("F2 Skipping saying hello")
-        th.join() # just in case
-    main()
