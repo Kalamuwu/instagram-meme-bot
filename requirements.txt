@@ -12,7 +12,9 @@ proglog==0.1.10
 pycryptodomex==3.15.0
 pydantic==1.9.2
 PySocks==1.7.1
+python-magic==0.4.27
 requests==2.28.1
+threadsafe-shell==1.0.0
 tqdm==4.64.1
 typing_extensions==4.4.0
 urllib3==1.26.12
