@@ -25,7 +25,7 @@ from config import (
     POST_DELAY_MIN_SECONDS, POST_DELAY_MAX_SECONDS, 
 )
 
-from threaded_shell import get_shell, Shell
+from threadsafe_shell import get_shell, Shell
 
 class Bot:
     def __init__(self, shell:Shell=None, client:Client=None):
