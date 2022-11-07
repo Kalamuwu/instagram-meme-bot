@@ -94,13 +94,11 @@ class Bot:
 
     def __post_next_in_queue(self):
         if self.logged_in:
-            if self.queue.cooldown == 0:
-                if len(self.queue) > 0:
-                    opts = get_next_options(self.queue.get_next_filename())
-                    res, data = self.queue.post(**opts)
-                    if not res: self.shell.warn(data)
-                else: self.shell.log("Nothing to post.")
-            else: self.shell.log(f"Posting is on cooldown ({self.shell.highlight(self.queue.get_cooldown())}s remaining).")
+            if len(self.queue) > 0:
+                opts = get_next_options(self.queue.get_next_filename())
+                res, data = self.queue.post(**opts)
+                if not res: self.shell.warn(data)
+            else: self.shell.log("Nothing to post.")
         else: self.shell.log("Not logged in.")
 
 
@@ -124,9 +122,7 @@ class Bot:
                     post_thread = threading.Thread(target=self.__post_next_in_queue, name="PostNextInQueue-Thread")
                     post_thread.start()
 
-                    sleep_time = randint(POST_DELAY_MIN_SECONDS,POST_DELAY_MAX_SECONDS)
-                    self.shell.log("Waiting", sleep_time, "seconds for next post.")
-                    time.sleep(sleep_time)
+                    time.sleep(self.queue.cooldown)
                     
                     if post_thread.is_alive():
                         self.shell.log("Waiting for post thread thread to stop...")
