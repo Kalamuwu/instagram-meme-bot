@@ -54,7 +54,6 @@ class PostQueue:
 
     def post(self, *args, **kwargs) -> (bool, object):
         if len(self.queue) == 0: return False, "nothing to post"
-        if self.cooldown > 0: return False, "on cooldown"
         path = self.queue.pop(0)
         (folder, filename, filefmt) = self.__class__.parse_path(path)
 

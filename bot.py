@@ -122,6 +122,7 @@ class Bot:
                     post_thread = threading.Thread(target=self.__post_next_in_queue, name="PostNextInQueue-Thread")
                     post_thread.start()
 
+                    self.shell.log("Sleeping", self.queue.cooldown, "seconds for next post")
                     time.sleep(self.queue.cooldown)
                     
                     if post_thread.is_alive():
