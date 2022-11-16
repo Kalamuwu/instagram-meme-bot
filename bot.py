@@ -98,7 +98,9 @@ class Bot:
                 opts = get_next_options(self.queue.get_next_filename())
                 res, data = self.queue.post(**opts)
                 if not res: self.shell.warn(data)
-            else: self.shell.log("Nothing to post.")
+            else:
+                self.shell.log("Nothing to post.")
+                self.queue.generate_new_cooldown(posted=False)
         else: self.shell.log("Not logged in.")
 
 
