@@ -3,7 +3,7 @@
 """post queue and cooldown"""
 
 import os
-from time import time
+import time
 from random import randint
 
 from instagrapi import Client
@@ -18,7 +18,7 @@ from threadsafe_shell import Shell, get_shell
 class PostQueue:
     def __init__(self, client: Client, shell: Shell = None):
         self.__queue = []
-        self.__cooldown_expires = int(time())
+        self.__cooldown_expires = int(time.time())
         self.client = client
         self.shell = get_shell() if shell is None else shell
 
@@ -34,14 +34,14 @@ class PostQueue:
 
     def generate_new_cooldown(self, posted=True, nothing_to_post=False) -> None:
         if nothing_to_post:
-            self.__cooldown_expires = int(time()) + 30
+            self.__cooldown_expires = int(time.time()) + 30
             self.shell.log("Nothing to post. Waiting", self.shell.highlight(30), "seconds for next scan.")
         elif not posted:
-            self.__cooldown_expires = int(time()) + 10
+            self.__cooldown_expires = int(time.time()) + 10
             self.shell.log("Last post not successfully posted. Waiting", self.shell.highlight(10), "seconds for API cooldown.")
         else:
             cool = randint(POST_DELAY_MIN_SECONDS, POST_DELAY_MAX_SECONDS)
-            self.__cooldown_expires = int(time()) + cool
+            self.__cooldown_expires = int(time.time()) + cool
             self.shell.log("New post cooldown", self.shell.highlight(cool), "seconds.")
 
 
@@ -102,10 +102,10 @@ class PostQueue:
     
     
     def get_cooldown(self) -> int:
-        return max(self.__cooldown_expires - int(time()), 0)
+        return max(self.__cooldown_expires - int(time.time()), 0)
     
     def is_cooldown(self) -> bool:
-        return int(time()) < self.__cooldown_expires
+        return int(time.time()) < self.__cooldown_expires
 
 
     def __len__(self) -> int:
