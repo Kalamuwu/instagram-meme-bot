@@ -4,6 +4,7 @@
 
 import os
 import time
+import datetime
 from random import randint
 
 from instagrapi import Client
@@ -74,9 +75,11 @@ class PostQueue:
             elif filefmt == "mp4": media = self.client.video_upload(path, *args, **kwargs)
             else: return False, "invalid mime type"
             data = media.dict()
+            data["taken_at"] = data["taken_at"] - datetime.timedelta(hours=4)  # apply timezone info, the messy and bad way
             self.shell.success("UPL  Posted", self.shell.highlight(filename+'.'+filefmt), "at", data["taken_at"].strftime("%I:%M on %b %-d"))
             try:
-                time.sleep(5) # ratelimit mitigation
+                self.shell.debug("Sleeping 3 seconds to like, to avoid ratelimits")
+                time.sleep(3) # ratelimit mitigation
                 self.client.media_like(data["id"])
                 self.shell.log("UPL  Successfully liked uploaded post.")
             except Exception as e:
