@@ -29,7 +29,7 @@ class Bot:
             self.client = Client()
             self.client.challenge_code_handler = challenges.challenge_code_handler
             self.client.change_password_handler = challenges.change_password_handler
-            self.client.handle_exception = challenges.login_exception_handler
+            # self.client.handle_exception = challenges.login_exception_handler
         else: self.client = client
         self.logged_in = False
         
@@ -49,9 +49,18 @@ class Bot:
         """ Logs in this instance's Client. """
         if self.shell.prompt("Log in?"):
             self.shell.log("Logging in to account ", self.shell.highlight(config.IG_USERNAME), "...", sep="")
-            self.client.login(config.IG_USERNAME, config.IG_PASSWORD)
-            self.shell.success("Logged in")
-            self.logged_in = True
+            try:
+                self.client.login(config.IG_USERNAME, config.IG_PASSWORD)
+                self.shell.success("Logged in")
+                self.logged_in = True
+            except exceptions.BadPassword:
+                self.shell.error("Bad password. Could not log in at this time.")
+            except exceptions.UnknownError as insta_ex:
+                if "The username you entered doesn't appear to belong to an account" in str(insta_ex):
+                    self.shell.error("Incorrect username; this username does not appear to belong to an account.")
+            except Exception as e:
+                self.shell.error("Could not log in, with error:", type(e), str(e))
+                raise
 
 
     def __scan_for_existing_sorted(self):
