@@ -22,6 +22,7 @@ from threadsafe_shell import get_shell, Shell
 class Bot:
     def __init__(self, shell:Shell=None, client:Client=None):
         self.shell = get_shell() if shell is None else shell
+        self.shell.set_debug_active(config.DEBUG)
         self.shell.debug("Debug mode active")
 
         if client is None:
