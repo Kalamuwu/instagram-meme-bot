@@ -75,6 +75,11 @@ class PostQueue:
             else: return False, "invalid mime type"
             data = media.dict()
             self.shell.success("UPL  Posted", self.shell.highlight(filename+'.'+filefmt), "at", data["taken_at"].strftime("%I:%M on %b %-d"))
+            try:
+                self.client.media_like(data["id"])
+                self.shell.log("UPL  Successfully liked uploaded post.")
+            except Exception as e:
+                self.shell.warn("UPL  Couldn't like post, failed with error:", str(e))
             self.generate_new_cooldown()
         except UnknownError as e:
             if "Uploaded image isn't in an allowed aspect ratio" in str(e):
