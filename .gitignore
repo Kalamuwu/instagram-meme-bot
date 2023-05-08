@@ -7,3 +7,4 @@ media/*
 pyenv.cfg
 sys
 config.py
+post_options.txt
