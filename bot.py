@@ -123,7 +123,14 @@ class Bot:
                     num_up += 1
                     
                     if (cool:=self.queue.get_cooldown()):
-                        self.shell.log("Sleeping", self.shell.highlight(cool), "seconds for next post", end='\n\n')
+                        hours, minutes, seconds = cool//3600, (cool//60)%60, cool%60
+                        # i do it this way because i would rather see "1h0m47s" than "1h47s"
+                        if hours:
+                            timestr = self.shell.highlight(hours) + 'h' + self.shell.highlight(minutes) + 'm' + self.shell.highlight(seconds) + 's'
+                        elif minutes:
+                            timestr = self.shell.highlight(minutes) + 'm' + self.shell.highlight(seconds) + 's'
+                        else: timestr = self.shell.highlight(seconds) + 's'
+                        self.shell.log("Sleeping", timestr, "for next post", end='\n\n')
                         time.sleep(cool)
                     else:
                         self.shell.log("No post cooldown, or cooldown already passed.", end='\n\n')
