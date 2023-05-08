@@ -52,7 +52,6 @@ def get_next_options(filename:str) -> dict:
     with open("post_options.txt", "r") as file:
         # read data
         lines = file.read().split('\n')
-    print(lines)
     returnval = ""
     with open("post_options.txt", "w") as file:
         file.truncate()  # clear file

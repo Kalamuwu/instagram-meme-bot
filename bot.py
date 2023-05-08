@@ -11,19 +11,11 @@ from random import randint
 
 from instagrapi import Client, exceptions
 
-from src.challenge_solvers import (
-    challenge_code_handler, change_password_handler,
-    login_exception_handler
-)
-from src.file_io import (convert_and_sort, get_next_options)
+from src import challenge_solvers as challenges
+from src import file_io as fileio
 from src.post_queue import PostQueue
 
-from config import (
-    IG_USERNAME, IG_PASSWORD,
-    DEBUG,
-    SORT_SLEEP_SECONDS,
-    POST_DELAY_MIN_SECONDS, POST_DELAY_MAX_SECONDS, 
-)
+import config
 
 from threadsafe_shell import get_shell, Shell
 
@@ -34,9 +26,9 @@ class Bot:
 
         if client is None:
             self.client = Client()
-            self.client.challenge_code_handler = challenge_code_handler
-            self.client.change_password_handler = change_password_handler
-            self.client.handle_exception = login_exception_handler
+            self.client.challenge_code_handler = challenges.challenge_code_handler
+            self.client.change_password_handler = challenges.change_password_handler
+            self.client.handle_exception = challenges.login_exception_handler
         else: self.client = client
         self.logged_in = False
         
@@ -55,8 +47,8 @@ class Bot:
     def login(self):
         """ Logs in this instance's Client. """
         if self.shell.prompt("Log in?"):
-            self.shell.log("Logging in to account ", self.shell.highlight(IG_USERNAME), "...", sep="")
-            self.client.login(IG_USERNAME, IG_PASSWORD)
+            self.shell.log("Logging in to account ", self.shell.highlight(config.IG_USERNAME), "...", sep="")
+            self.client.login(config.IG_USERNAME, config.IG_PASSWORD)
             self.shell.success("Logged in")
             self.logged_in = True
 
@@ -77,12 +69,12 @@ class Bot:
             total = 0
             with self.__filesystem_lock:
                 for path in os.listdir("media/outbound"):
-                    conv = convert_and_sort(self.queue, "media/outbound/"+path)
+                    conv = fileio.convert_and_sort(self.queue, "media/outbound/"+path)
                     if conv: converted += 1
                     total += 1
-            if converted: self.shell.log("Sort: Discovered", self.shell.highlight(total), "files. Added", self.shell.highlight(converted), "files to queue.")
-            if total: self.shell.log("Sort:", self.shell.highlight(len(self.queue)), "files in queue.")
-            time.sleep(SORT_SLEEP_SECONDS)
+            if converted: self.shell.log("Sort: Discovered", self.shell.highlight(total), "files. Added", self.shell.highlight(converted), "files to queue.", end='\n' if total else '\n\n')
+            if total: self.shell.log("Sort:", self.shell.highlight(len(self.queue)), "files in queue.", end='\n' if converted else '\n\n')
+            time.sleep(config.SORT_SLEEP_SECONDS)
 
     def __scan_and_sort_new(self):
         try:
@@ -95,12 +87,12 @@ class Bot:
     def __post_next_in_queue(self):
         if self.logged_in:
             if len(self.queue) > 0:
-                opts = get_next_options(self.queue.get_next_filename())
+                opts = fileio.get_next_options(self.queue.get_next_filename())
                 res, data = self.queue.post(**opts)
                 if not res: self.shell.warn(data)
             else:
                 self.shell.log("Nothing to post.")
-                self.queue.generate_new_cooldown(posted=False)
+                self.queue.generate_new_cooldown(nothing_to_post=True)
         else: self.shell.log("Not logged in.")
 
 
@@ -115,21 +107,26 @@ class Bot:
           b. Post next in queue
           c. Sleep
         """
-        self.__scan_and_sort_new().start()
         post_thread = None
         try:
+            num_up = 0
+            self.__scan_and_sort_new().start()
             if self.logged_in:
                 self.shell.success(f"-- Post loop start --")
                 while True:
                     post_thread = threading.Thread(target=self.__post_next_in_queue, name="PostNextInQueue-Thread")
                     post_thread.start()
-
-                    self.shell.log("Sleeping", self.queue.cooldown, "seconds for next post")
-                    time.sleep(self.queue.cooldown)
                     
-                    if post_thread.is_alive():
-                        self.shell.log("Waiting for post thread thread to stop...")
-                        post_thread.join()
+                    while post_thread.is_alive(): pass
+                    
+                    self.shell.log("Num uploaded:", self.shell.highlight(num_up), "Num left in queue:", self.shell.highlight(len(self.queue)))
+                    num_up += 1
+                    
+                    if (cool:=self.queue.get_cooldown()):
+                        self.shell.log("Sleeping", self.shell.highlight(cool), "seconds for next post", end='\n\n')
+                        time.sleep(cool)
+                    else:
+                        self.shell.log("No post cooldown, or cooldown already passed.", end='\n\n')
             
             else:
                 self.shell.warn("Not logged in - just sorting.")
