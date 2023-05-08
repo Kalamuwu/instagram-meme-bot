@@ -76,6 +76,7 @@ class PostQueue:
             data = media.dict()
             self.shell.success("UPL  Posted", self.shell.highlight(filename+'.'+filefmt), "at", data["taken_at"].strftime("%I:%M on %b %-d"))
             try:
+                time.sleep(5) # ratelimit mitigation
                 self.client.media_like(data["id"])
                 self.shell.log("UPL  Successfully liked uploaded post.")
             except Exception as e:
