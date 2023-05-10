@@ -1,6 +1,7 @@
 imageio==2.22.3
 imageio-ffmpeg==0.4.8
 python-magic==0.4.27
+moviepy==1.0.3
 instagrapi==1.16.29
 threadsafe-shell==1.5.1
 aiohttp==3.8.4

@@ -53,7 +53,7 @@ def get_next_options(filename:str) -> dict:
         # read data
         lines = file.read().split('\n')
     returnval = ""
-    with open("post_options.txt", "w") as file:
+    with open("src/post_options.txt", "w") as file:
         file.truncate()  # clear file
         # write back all but first line
         file.write(lines[0])  # header

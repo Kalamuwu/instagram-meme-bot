@@ -1,1 +1,0 @@
-example_filename | put a caption here, add whatever #hashtags or @mentions you want --usertags userid,userid,... --latlon lat,lon --city Town[,State],Country --extra {json (see instagrapi docs)}

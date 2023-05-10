@@ -110,7 +110,7 @@ class WebserverFile(io.StringIO):
         # initialize server
         self.__event_loop.run_until_complete(self.__server_runner.setup())
         # run server
-        site = web.TCPSite(self.__server_runner, 'localhost', self.port)
+        site = web.TCPSite(self.__server_runner, '0.0.0.0', self.port)
         self.__event_loop.run_until_complete(site.start())
         print("Started server.")
         self.is_running = True

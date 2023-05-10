@@ -5,7 +5,7 @@
 import os
 import time
 import datetime
-from random import randint
+import random
 
 from instagrapi import Client
 from instagrapi.exceptions import UnknownError
@@ -18,7 +18,7 @@ from threadsafe_shell import Shell, get_shell
 
 class PostQueue:
     def __init__(self, client: Client, shell: Shell = None):
-        self.__queue = []
+        self.__queue = list()
         self.__cooldown_expires = int(time.time())
         self.client = client
         self.shell = get_shell() if shell is None else shell
@@ -26,11 +26,10 @@ class PostQueue:
 
     class AlreadyInQueueException(Exception): pass
 
-    def add(self, path) -> (bool, Exception):
-        if self.__queue.__contains__(path):
-            return False, self.__class__.AlreadyInQueueException("already in queue")
+    def add(self, path):
+        if path in self.__queue:
+            raise self.__class__.AlreadyInQueueException(path + " already in queue!")
         self.__queue.append(path)
-        return True, None
     
 
     def generate_new_cooldown(self, posted=True, nothing_to_post=False) -> None:
@@ -41,7 +40,7 @@ class PostQueue:
             self.__cooldown_expires = int(time.time()) + 10
             self.shell.log("Last post not successfully posted. Waiting", self.shell.highlight(10), "seconds for API cooldown.")
         else:
-            cool = randint(POST_DELAY_MIN_SECONDS, POST_DELAY_MAX_SECONDS)
+            cool = random.randint(POST_DELAY_MIN_SECONDS, POST_DELAY_MAX_SECONDS)
             self.__cooldown_expires = int(time.time()) + cool
             self.shell.log("New post cooldown", self.shell.highlight(cool), "seconds.")
 
@@ -60,7 +59,7 @@ class PostQueue:
     
 
     def get_next_filename(self):
-        return self.__queue[0]
+        return random.choice(self.__queue)
 
 
     def post(self, *args, **kwargs) -> (bool, object):

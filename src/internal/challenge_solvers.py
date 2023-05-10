@@ -70,7 +70,7 @@ def get_code_from_email(username):
 """
 
 def challenge_code_handler(username, choice):
-    log("Login challenge required")
+    print("Login challenge required")
     if choice == ChallengeChoice.SMS:
         return get_code_from_sms(username)
     elif choice == ChallengeChoice.EMAIL:
