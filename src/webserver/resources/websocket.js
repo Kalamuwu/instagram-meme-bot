@@ -15,6 +15,10 @@ ws.onopen = (event) => {
     add_log_entry('Connection opened.');
 }
 
+ws.onclose = (event) => {
+    add_log_entry('<span class="colored color_red">Connection closed.</span>');
+}
+
 ws.onmessage = function(event) {
     let rec = JSON.parse(event.data);
     console.debug("Message received:", rec);
