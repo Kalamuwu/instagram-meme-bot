@@ -5,8 +5,8 @@ const protocol = (location.protocol==="http:") ? 'ws' : 'wss';
 const url = `${protocol}://${location.host}/ws/app/`;
 const ws = new ReconnectingWebSocket(url, null, {debug: true, reconnectInterval: 3000});
 
-const logDiv = document.getElementById("log");
 function add_log_entry(msg) {
+    const logDiv = document.getElementById("log");
     logDiv.insertAdjacentHTML('beforeend', `<div class="logentry"> <span> ${msg} </span> </div>`);
     logDiv.scrollTop = logDiv.scrollHeight;
 }
