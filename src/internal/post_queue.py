@@ -10,7 +10,7 @@ from random import randint
 from instagrapi import Client
 from instagrapi.exceptions import UnknownError
 
-from config import (
+from src.config import (
     POST_DELAY_MIN_SECONDS, POST_DELAY_MAX_SECONDS
 )
 
@@ -27,7 +27,7 @@ class PostQueue:
     class AlreadyInQueueException(Exception): pass
 
     def add(self, path) -> (bool, Exception):
-        if path in self.__queue:
+        if self.__queue.__contains__(path):
             return False, self.__class__.AlreadyInQueueException("already in queue")
         self.__queue.append(path)
         return True, None

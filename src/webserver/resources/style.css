@@ -1,0 +1,79 @@
+html {
+    --panel-background: rgb(240,240,240);
+}
+
+body {
+    margin: 0;
+    margin-top: 85px;
+}
+
+header, footer {
+    position: fixed;
+    display: block;
+    margin: 0;
+    background-color: rgb(210,210,210);
+    width: 100vw;
+}
+
+header {
+    top: 0;
+    height: 70px;
+}
+footer {
+    bottom: 0;
+    height: 50px;
+}
+
+body > div {
+    width: 95vw;
+    max-width: 1100px !important;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#main > div {
+    margin: 0;
+    margin-top: 10px;
+    background-color: var(--panel-background);
+}
+
+#info {
+    height: 120px;
+}
+
+#buttons {
+    height: 60px;
+}
+
+#log {
+    font-family:'Courier New', Courier, monospace;
+    margin: 10px;
+    margin-top: 30px;
+    border: 1px solid rgb(180, 180, 180);
+    height: calc(100vh - 350px);
+    min-height: 300px !important;
+    overflow: scroll;
+    bottom: 10;
+    background-color: white !important;
+}
+
+.logentry {
+    padding: 5px;
+    color: rgb(60,60,60);
+}
+
+#log div:nth-child(odd) {
+    background-color: rgb(240,240,240);
+}
+#log div:nth-child(even) {
+    background-color: rgb(210, 233, 255);
+}
+
+.color_black { color: black; }
+.color_red { color: rgb(240,0,0); }
+.color_green { color: rgb(10,180,10); }
+.color_yellow { color: rgb(230,180,0); }
+.color_blue { color: rgb(20,65,255); }
+.color_purple { color: rgb(180,10,255); }
+.color_cyan { color: rgb(0,180,180); }
+.color_white { color: rgb(150,150,150); }

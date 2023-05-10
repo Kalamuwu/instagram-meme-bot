@@ -1,28 +1,29 @@
 #!/usr/bin/env python3
 
 """
-# A simple instagram bot package to test uploading memes from a folder :welp:
+# A simple instagram bot package to periodically upload media from a source folder
 """
 
 import os
-import threading
 import time
+import threading
 from random import randint
 
 from instagrapi import Client, exceptions
-
-from src import challenge_solvers as challenges
-from src import file_io as fileio
-from src.post_queue import PostQueue
-
-import config
-
 from threadsafe_shell import get_shell, Shell
+
+from src.internal import challenge_solvers as challenges
+from src.internal import file_io as fileio
+from src.internal.post_queue import PostQueue
+
+import src.config as config
+
 
 class Bot:
     def __init__(self, shell:Shell=None, client:Client=None):
         self.shell = get_shell() if shell is None else shell
         self.shell.set_debug_active(config.DEBUG)
+        self.shell.write_to_console = config.OUTPUT_TO_CONSOLE
         self.shell.debug("Debug mode active")
 
         if client is None:

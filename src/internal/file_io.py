@@ -4,8 +4,8 @@ import magic
 
 from instagrapi.types import Location
 
-from src.post_queue import PostQueue
-from config import PERMANENT_HASHTAGS
+from src.internal.post_queue import PostQueue
+from src.config import PERMANENT_HASHTAGS
 
 from threadsafe_shell import get_shell
 shell = get_shell()
@@ -49,7 +49,7 @@ def convert_and_sort(queue: PostQueue, path: str, comment: str = "", tags=[], ):
 
 
 def get_next_options(filename:str) -> dict:
-    with open("post_options.txt", "r") as file:
+    with open("src/post_options.txt", "r") as file:
         # read data
         lines = file.read().split('\n')
     returnval = ""

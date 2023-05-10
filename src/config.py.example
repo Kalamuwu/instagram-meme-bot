@@ -1,0 +1,40 @@
+# config.py
+# Configuration variables for the bot.
+
+
+# Instagram configuration
+
+IG_USERNAME = ''
+""" Instagram bot account username. Provide the username, not the email/phone. """
+IG_PASSWORD = ''
+""" Instagram bot password, in plaintext. """
+
+PERMANENT_HASHTAGS = ""
+""" Hashtags to use on every uploaded post. """
+
+
+# Output and control information
+
+DEBUG = False
+""" Whether or not to send debug output. May or may not be useful. """
+
+OUTPUT_TO_CONSOLE = True
+""" Whether or not to output to the console, at all. """
+
+USE_WEBSERVER = True
+""" If `True`, a webserver will be spawned at `localhost:<port>`. """
+WEBSERVER_PORT = 5000
+""" The port to spawn the webserver to, if it is to be spawned. """
+WEBSERVER_LOG_IN = True
+""" The webserver cannot prompt you for anything. If this is `True`, the bot will log into the account; otherwise, it will not. """
+
+
+# Timing and scheduling information
+
+SORT_SLEEP_SECONDS = 5
+""" How long the sorting thread should sleep. Raise this to avoid too many disk hits or unnecessary resource usage. """
+
+POST_DELAY_MIN_SECONDS = 30
+""" Low boundary for upload sleep time randomization. """
+POST_DELAY_MAX_SECONDS = 60
+""" High boundary for upload sleep time randomization. """
