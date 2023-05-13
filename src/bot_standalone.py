@@ -43,12 +43,12 @@ class Bot:
         
         self.queue = PostQueue(self.client)
         self.__scan_for_existing_sorted()
-        
-    
 
-    def login(self):
+    def login(self, did_previously_try=False):
         """ Logs in this instance's Client. """
-        if self.shell.prompt("Log in?"):
+        if config.OUTPUT_TO_CONSOLE and not did_previously_try:
+            config.AUTO_LOG_IN = self.shell.prompt("Log in?")
+        if config.AUTO_LOG_IN:
             self.shell.log("Logging in to account ", self.shell.highlight(config.IG_USERNAME), "...", sep="")
             try:
                 self.client.login(config.IG_USERNAME, config.IG_PASSWORD)
@@ -56,12 +56,20 @@ class Bot:
                 self.logged_in = True
             except exceptions.BadPassword:
                 self.shell.error("Bad password. Could not log in at this time.")
-            except exceptions.UnknownError as insta_ex:
-                if "The username you entered doesn't appear to belong to an account" in str(insta_ex):
-                    self.shell.error("Incorrect username; this username does not appear to belong to an account.")
             except Exception as e:
-                self.shell.error("Could not log in, with error:", type(e), str(e))
-                raise
+                if not did_previously_try:
+                    if "The username you entered doesn't appear to belong to an account" in str(e):
+                        self.shell.error("Incorrect username; this username does not appear to belong to an account.")
+                    elif "Please wait a few minutes before you try again" in str(e):
+                        self.shell.warn("Ratelimit 403 received. Waiting 10 minutes to log in again.")
+                        time.sleep(600)
+                    else:
+                        self.shell.error("Could not log in, with error:", type(e), str(e))
+                    self.shell.log("Attempting login one more time...")
+                    return self.login(did_previously_try=True)
+                else:
+                    self.shell.error("Could not log in, with error:", type(e), str(e))
+                    raise
 
 
     def __scan_for_existing_sorted(self):
@@ -100,12 +108,24 @@ class Bot:
         if self.logged_in:
             if len(self.queue) > 0:
                 opts = fileio.get_next_options(self.queue.get_next_filename())
-                res, data = self.queue.post(**opts)
-                if not res: self.shell.warn(data)
+                did_error, data = self.queue.post(**opts)
+                if did_error:
+                    self.shell.warn(data)
+                    if "Please wait a few minutes before you try again" in str(data["exception"]):
+                        self.shell.warn("403 received. Sleeping and attempting relogin...")
+                        self.client.logout()
+                        self.shell.log("Logged out, sleeping 10 minutes.")
+                        time.sleep(600)
+                        self.shell.log("Attempting re-login.")
+                        self.login()
+                        if not self.logged_in:
+                            self.shell.error("Error re-logging in. Exiting...")
+                            raise data["exception"]
+                        self.shell.success("Successfully relogged. Attempting next post...")
             else:
                 self.shell.log("Nothing to post.")
                 self.queue.generate_new_cooldown(nothing_to_post=True)
-        else: self.shell.log("Not logged in.")
+        else: self.shell.warn("Not logged in.")
 
 
     def main_loop(self):

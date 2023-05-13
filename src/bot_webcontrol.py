@@ -159,23 +159,6 @@ class Bot(StandaloneBot):
         super().__init__(shell, client)
         self.__webserver = WebserverFile(port=5000)
         self.shell.set_log_output_file(self.__webserver)
-    
-    def login(self):
-        """ Logs in this instance's Client. """
-        if config.WEBSERVER_LOG_IN:
-            self.shell.log("Logging in to account ", self.shell.highlight(config.IG_USERNAME), "...", sep="")
-            try:
-                self.client.login(config.IG_USERNAME, config.IG_PASSWORD)
-                self.shell.success("Logged in")
-                self.logged_in = True
-            except exceptions.BadPassword:
-                self.shell.error("Bad password. Could not log in at this time.")
-            except exceptions.UnknownError as insta_ex:
-                if "The username you entered doesn't appear to belong to an account" in str(insta_ex):
-                    self.shell.error("Incorrect username; this username does not appear to belong to an account.")
-            except Exception as e:
-                self.shell.error("Could not log in, with error:", type(e), str(e))
-                raise
 
 
 
